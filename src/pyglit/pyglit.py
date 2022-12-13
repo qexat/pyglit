@@ -1,8 +1,13 @@
 from __future__ import annotations
 
-from collections.abc import Generator, Iterator, Sequence
-from random import random, randint
-from typing import Generic, overload, TypeVar
+from collections.abc import Generator
+from collections.abc import Iterator
+from collections.abc import Sequence
+from random import randint
+from random import random
+from typing import Generic
+from typing import overload
+from typing import TypeVar
 
 from bepospliz import anon_args
 
