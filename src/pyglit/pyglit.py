@@ -194,7 +194,7 @@ class GIter(Generic[T_co]):
         Args:
             seq (Sequence[T]): the sequence used to build the iterator.
             consume (bool, optional): if the picked elements are popped off the iterator. Defaults to True.
-            max_size (int, optional): sets the iterator max size (useful if `consume` is set to False). Defaults to -1.
+            max_size (int, optional): sets the iterator max size (useful if `consume` is set to False). Defaults to None.
 
         Example:
         >>> l = [3, 5, 2, 1]
