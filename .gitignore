@@ -1,0 +1,8 @@
+# Python
+*.pyc
+
+# MyPy
+.mypy_cache/*
+
+# Pip
+*.egg-info
