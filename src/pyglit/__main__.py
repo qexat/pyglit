@@ -7,8 +7,8 @@ from pyglit import GIter
 
 
 def main() -> None:
-    for n in GIter.syracuse(15):
-        print(n, end=" ")
+    for n in GIter.syracuse(5):
+        print(n)
 
 
 if __name__ == "__main__":
