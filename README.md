@@ -4,3 +4,5 @@ On its core, it's originally inspired from Gleam's iterator (hence the name), I 
 
 It's more like a PoC rather than an actual module ; the idea is to experiment on how this could be used
 in the wild, and if it is conclusive, then to build an actual project to publish on PyPI.
+
+You can find some documentation [here](./docs/main.md).

@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+from collections.abc import Callable
 from collections.abc import Generator
 from collections.abc import Iterator
 from collections.abc import Sequence
 from random import randint
 from random import random
+from typing import Any
 from typing import Generic
 from typing import overload
 from typing import TypeVar
@@ -12,6 +14,7 @@ from typing import TypeVar
 from bepospliz import anon_args
 
 T_co = TypeVar("T_co", covariant=True)
+R = TypeVar("R")
 
 __all__ = ("GIter",)
 
@@ -19,21 +22,21 @@ __all__ = ("GIter",)
 class GIter(Generic[T_co]):
     @classmethod
     @overload
-    def from_range(cls, stop: int, /) -> GIter[int]:
+    def range(cls, stop: int, /) -> GIter[int]:
         ...
 
     @classmethod
     @overload
-    def from_range(cls, start: int, stop: int, /) -> GIter[int]:
+    def range(cls, start: int, stop: int, /) -> GIter[int]:
         ...
 
     @classmethod
     @overload
-    def from_range(cls, start: int, stop: int, step: int, /) -> GIter[int]:
+    def range(cls, start: int, stop: int, step: int, /) -> GIter[int]:
         ...
 
     @classmethod
-    def from_range(
+    def range(
         cls,
         start: int,
         stop: int | None = None,
@@ -72,7 +75,7 @@ class GIter(Generic[T_co]):
 
     @classmethod
     @overload
-    def from_random(
+    def random(
         cls,
         *,
         iterations: int | None = None,
@@ -81,20 +84,20 @@ class GIter(Generic[T_co]):
 
     @classmethod
     @overload
-    def from_random(
+    def random(
         cls,
-        s_min: float = 0,
-        s_max: float = 1,
+        min: float = 0,
+        max: float = 1,
         *,
         iterations: int | None = None,
     ) -> GIter[float]:
         ...
 
     @classmethod
-    def from_random(
+    def random(
         cls,
-        s_min: float = 0,
-        s_max: float = 1,
+        min: float = 0,
+        max: float = 1,
         *,
         iterations: int | None = None,
     ) -> GIter[float]:
@@ -102,23 +105,18 @@ class GIter(Generic[T_co]):
         Create an iterator of random numbers (between 0 and 1).
 
         Args:
-            s_min (float, optional): minimum value of the iterator to stop the generation. Defaults to 0.
-            s_max (float, optional): maximum value of the iterator to stop the generation. Defaults to 1.
+            min (float, optional): random minimum value. Defaults to 0.
+            max (float, optional): random maximum value. Defaults to 1.
             iterations (int | None, optional): number of iterations. If not specified, the iterator is infinite. Defaults to None.
 
         Raises:
-            ValueError: if `s_min` is not between 0 and 1.
-            ValueError: if `s_max` is not between 0 and 1.
-
-        Explanation of `s_min` and `s_max` behavior:
-            They act as sentinels (hence the `s_`). If the randomly generated number is out of these bounds, the iterator stops.
-            If `min` is set to 0 and `max` to 1, they basically do nothing, since `random()` always generates numbers
-            between these two values.
+            ValueError: if `min` is not between 0 and 1.
+            ValueError: if `max` is not between 0 and 1.
         """
 
-        if s_min < 0 or s_min > 1:
+        if min < 0 or min > 1:
             raise ValueError("min must be between 0 and 1")
-        if s_max < 0 or s_max > 1:
+        if max < 0 or max > 1:
             raise ValueError("max must be between 0 and 1")
 
         if iterations is not None and iterations < 0:
@@ -126,23 +124,24 @@ class GIter(Generic[T_co]):
 
         def generator() -> Generator[float, None, None]:
             _min, _max, i, i_max = (
-                s_min,
-                s_max,
+                min,
+                max,
                 0,
                 1 if iterations is None else iterations,
             )
-            while _min <= (r := random()) < _max and i >= i_max:
-                # if infinite, increment i_max so i is never above
-                if iterations is None:
-                    i_max += 1
+            while i < i_max:
+                if _min <= (r := random()) < _max:
+                    # if infinite, increment i_max so i is never above
+                    if iterations is None:
+                        i_max += 1
+                    i += 1
 
-                i += 1
-                yield r
+                    yield r
 
         return GIter(generator())
 
     @classmethod
-    def from_randint(
+    def randint(
         cls,
         int_min: int,
         int_max: int,
@@ -153,12 +152,12 @@ class GIter(Generic[T_co]):
         Create an iterator of random integers.
 
         Args:
-            int_min (int): the minimum integer value (`randint`'s `a`)
-            int_max (int): the maximum integer value (`randint`'s `b`)
+            int_min (int): the minimum integer value (`randint`'s `a`).
+            int_max (int): the maximum integer value (`randint`'s `b`).
             iterations (int | None, optional): number of iterations. If not specified, the iterator is infinite. Defaults to None.
 
         Raises:
-            ValueError: if `int_min` is bigger than `int_max`
+            ValueError: if `int_min` is bigger than `int_max`.
         """
 
         if int_min > int_max:
@@ -169,7 +168,7 @@ class GIter(Generic[T_co]):
 
         def generator() -> Generator[int, None, None]:
             i, i_max = 0, 1 if iterations is None else iterations
-            while i >= i_max:
+            while i < i_max:
                 # if infinite, increment i_max so i is never above
                 if iterations is None:
                     i_max += 1
@@ -180,7 +179,7 @@ class GIter(Generic[T_co]):
         return GIter(generator())
 
     @classmethod
-    def from_choice(
+    def choice(
         cls,
         seq: Sequence[T_co],
         *,
@@ -189,7 +188,7 @@ class GIter(Generic[T_co]):
     ) -> GIter[T_co]:
         """
         Create an iterator from a sequence that yields randomly an element.
-        By default, consumes this latter ; this can be set off which would make the iterator infinite, except if you set a maximum size.
+        By default, consumes this latter ; this can be set off, which would make the iterator infinite except if you set a maximum size.
 
         Args:
             seq (Sequence[T]): the sequence used to build the iterator.
@@ -227,9 +226,72 @@ class GIter(Generic[T_co]):
 
         return GIter(generator())
 
+    @classmethod
+    def syracuse(cls, starting: int, *, include_starting: bool = False) -> GIter[int]:
+        """
+        Create an iterator of all the integers that follow `starting` in the Syracuse sequence according to the Collatz conjecture.
+
+        See: <https://en.wikipedia.org/wiki/Collatz_conjecture>
+
+        Args:
+            starting (int): the integer to start from.
+            include_starting (bool, optional): whether the starting integer should be included. Defaults to False.
+
+        Raises:
+            ValueError: if the starting integer is not positive.
+        """
+
+        if starting <= 0:
+            raise ValueError("starting integer must be strictly positive")
+
+        def generator() -> Generator[int, None, None]:
+            value: int = starting
+
+            if include_starting:
+                yield value
+
+            while value != 1:
+                value = value // 2 if value % 2 == 0 else 3 * value + 1
+                yield value
+
+        return GIter(generator())
+
+    @overload
     @anon_args
-    def __init__(self, generator: Generator[T_co, None, None]) -> None:
+    def __init__(
+        self,
+        generator: Generator[T_co, None, None],
+    ) -> None:
+        ...
+
+    @overload
+    @anon_args
+    def __init__(
+        self,
+        generator: Generator[T_co, None, None],
+        function: Callable[[T_co], Any] | None,
+    ) -> None:
+        ...
+
+    @anon_args
+    def __init__(
+        self,
+        generator: Generator[T_co, None, None],
+        function: Callable[[T_co], Any] | None = None,
+    ) -> None:
         self.__generator = generator
+        self.__function: Callable[[T_co], Any] | None = function
 
     def __iter__(self) -> Iterator[T_co]:
         return self.__generator
+
+    # *-- WIP: NOT DOCUMENTED FOR NOW --* #
+
+    def map(self, function: Callable[[T_co], Any]) -> GIter[T_co]:
+        self.__function = function
+        return self
+
+    def run(self) -> None:
+        for i in self.__generator:
+            if self.__function:
+                self.__function(i)
