@@ -17,7 +17,7 @@ You can find some documentation [here](./docs/main.md).
 
 # Generating 5 random numbers
 >>> for x in GIter.random(iterations=5):
-...    print(x, end=" ")
+...    print(x)
 0.3055292429351516
 0.36749204105856714
 0.6805446569793817
